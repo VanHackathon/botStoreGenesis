@@ -46,14 +46,10 @@ class CreateShopBot(telepot.helper.ChatHandler):
 
 
 #keep this order
-#API_KEY = sys.argv[1]
-API_KEY = "f0238210a5210edbd943d49526cba54e"
-#PASSWORD = sys.argv[2]
-PASSWORD = "f50bd1e9c9e87befc956ac0677acd359"
-#SHOP_NAME = sys.argv[3]
-SHOP_NAME = "vanhackathonstore-2"
-#TOKEN = sys.argv[4]
-TOKEN="260558085:AAFXp5xENhne000dQm9t2Iv8ksq8_XK7ySU"
+API_KEY = sys.argv[1]
+PASSWORD = sys.argv[2]
+SHOP_NAME = sys.argv[3]
+TOKEN = sys.argv[4]
 
 bot = telepot.DelegatorBot(TOKEN, [
     pave_event_space()(
