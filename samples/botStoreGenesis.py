@@ -24,8 +24,8 @@ class CreateShopBot(telepot.helper.ChatHandler):
                 
         # Get all categories to create menu
         self.product_types = Set()
-        products = shopify.Product.find()                
-        for product in products:
+        self.products = shopify.Product.find()                
+        for product in self.products:
             string = product.to_json()
             data = json.loads(string)
             self.product_types.add(data['product']['product_type'])
@@ -51,6 +51,17 @@ class CreateShopBot(telepot.helper.ChatHandler):
                 bot.sendMessage(chat_id, 'Choose the product type:', reply_markup=markup)
                 
             # Show Category Product
+            elif text in self.product_types:
+                keyboardCurrentProductsBtns = []
+                for product in self.products:
+                    string = product.to_json()
+                    data = json.loads(string)
+                    if data['product']['product_type'] == text:
+                        keyboardCurrentProductsBtns.append([KeyboardButton(text=data['product']['title'])])
+                text = ''
+                markup = ReplyKeyboardMarkup(keyboard=keyboardCurrentProductsBtns, one_time_keyboard=True)
+                bot.sendMessage(chat_id, 'Choose product: ', reply_markup=markup)
+                
             if text != None and text != '':
                 bot.sendMessage(chat_id=chat_id, text=text)
 
@@ -61,6 +72,7 @@ API_KEY = sys.argv[1]
 PASSWORD = sys.argv[2]
 SHOP_NAME = sys.argv[3]
 TOKEN = sys.argv[4]
+
 
 
 
