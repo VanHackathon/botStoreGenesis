@@ -2,6 +2,7 @@ import shopify
 import sys
 import os
 import json
+from sets import Set
 
 print('rodou algo')
 
@@ -27,9 +28,13 @@ count = shopify.Product.count()
 
 print('count={}',count)
 
+
+product_types = Set()
+    
 for product in products:
     string = product.to_json()
     data = json.loads(string)
+    product_types.add(data['product']['product_type'])
     print(data['product']['title'])
 
 
