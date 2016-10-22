@@ -15,6 +15,7 @@ emoji_white_check_mark = u'\u2705'
 emoji_x = u"\u274C"
 emoji_convenience_store = u"\U0001F3EA"
 
+
 class CreateShopBot(telepot.helper.ChatHandler):
     def __init__(self, *args, **kwargs):
         super(self.__class__, self).__init__(*args, **kwargs)
@@ -91,9 +92,9 @@ class CreateShopBot(telepot.helper.ChatHandler):
                         print image
                         if image != None:
                             imageURL = data['product']['image']['src']
-                            bot.sendPhoto(chat_id, imageURL, caption=data['product']['title'] + '\n' + '/' + str(data['product']['id']) + '\n$' + data['product']['variants'][0]['price'])
+                            bot.sendPhoto(chat_id, imageURL, caption=data['product']['title'] + '\n' + '/Code' + str(data['product']['id']) + '\n$' + data['product']['variants'][0]['price'])
                         else:
-                            bot.sendMessage(chat_id, data['product']['title'] + '\n' + '/'+str(data['product']['id'])
+                            bot.sendMessage(chat_id, data['product']['title'] + '\n' + '/Code'+str(data['product']['id'])
                                             + '\n$' + data['product']['variants'][0]['price'])
 
             # Show Product Details
@@ -127,7 +128,7 @@ class CreateShopBot(telepot.helper.ChatHandler):
                 bot.sendMessage(chat_id, detailedString, reply_markup=markup)
 
             # Show Product Details By Code
-            elif text[0] == '/': #remember to put all / commands before this elif
+            elif text[:5] == '/Code': #remember to put all / commands before this elif
                 # Name: title
                 #
                 # Type: product_type
@@ -137,7 +138,10 @@ class CreateShopBot(telepot.helper.ChatHandler):
                 # Price:$variants[0].price
                 #
                 # Buy  button
-                productById = shopify.Product.find(text[1:])
+
+                bot.sendChatAction(chat_id=chat_id, action='typing')
+
+                productById = shopify.Product.find(text[5:])
                 string = productById.to_json()
                 data = json.loads(string)
 
@@ -177,14 +181,10 @@ class CreateShopBot(telepot.helper.ChatHandler):
 
 
 #keep this order
-#API_KEY = sys.argv[1]
-API_KEY = "f0238210a5210edbd943d49526cba54e"
-#PASSWORD = sys.argv[2]
-PASSWORD = "f50bd1e9c9e87befc956ac0677acd359"
-#SHOP_NAME = sys.argv[3]
-SHOP_NAME = "vanhackathonstore-2"
-#TOKEN = sys.argv[4]
-TOKEN="260558085:AAFXp5xENhne000dQm9t2Iv8ksq8_XK7ySU"
+API_KEY = sys.argv[1]
+PASSWORD = sys.argv[2]
+SHOP_NAME = sys.argv[3]
+TOKEN = sys.argv[4]
 
 
 bot = telepot.DelegatorBot(TOKEN, [
