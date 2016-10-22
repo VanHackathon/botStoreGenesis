@@ -8,6 +8,12 @@ import json
 import time
 from sets import Set
 
+emoji_page_with_curl = u'\U0001F4C3'
+emoji_memo = u'\U0001F4DD'
+emoji_credit_card = u'\U0001F4B3'
+emoji_white_check_mark = u'\u2705'
+emoji_x = u"\u274C"
+emoji_convenience_store = u"\U0001F3EA"
 
 class CreateShopBot(telepot.helper.ChatHandler):
     def __init__(self, *args, **kwargs):
@@ -44,16 +50,16 @@ class CreateShopBot(telepot.helper.ChatHandler):
         if chat_type == 'private' and content_type == 'text':
             text = msg['text']
             # Start store
-            if text == '/create' or text == '/start' or text == 'Cancel':   #user may be restarting flow
+            if text == '/create' or text == '/start' or text == emoji_x+' Cancel':   #user may be restarting flow
                 self.currentNameStr = ''
                 self.currentTypeStr = ''
                 self.currentDetailStr = ''
                 self.currentPriceStr = ''
-                markup = ReplyKeyboardMarkup(keyboard=[[KeyboardButton(text='List Categories')]], one_time_keyboard=True)
-                bot.sendMessage(chat_id, 'Welcome to {}! - What do you want to do?'.format(self.shopName), reply_markup=markup)                                
+                markup = ReplyKeyboardMarkup(keyboard=[[KeyboardButton(text=emoji_memo+' List Categories')]], one_time_keyboard=True)
+                bot.sendMessage(chat_id, 'Welcome to {} '.format(self.shopName) + emoji_convenience_store + ' - What do you want to do?', reply_markup=markup)
 
             # List Products Categories
-            elif text == 'List Categories':
+            elif text == emoji_memo+' List Categories':
                 # text=''
                 keyboardbuttons = []
                 for types in self.product_types:
@@ -85,10 +91,10 @@ class CreateShopBot(telepot.helper.ChatHandler):
                         print image
                         if image != None:
                             imageURL = data['product']['image']['src']
-                            bot.sendPhoto(chat_id, imageURL, caption=data['product']['title'] + '\n' + '/' + str(data['product']['id']) + '\n' + data['product']['variants'][0]['price'])
+                            bot.sendPhoto(chat_id, imageURL, caption=data['product']['title'] + '\n' + '/' + str(data['product']['id']) + '\n$' + data['product']['variants'][0]['price'])
                         else:
                             bot.sendMessage(chat_id, data['product']['title'] + '\n' + '/'+str(data['product']['id'])
-                                            + '\n' + data['product']['variants'][0]['price'])
+                                            + '\n$' + data['product']['variants'][0]['price'])
 
             # Show Product Details
             elif text in self.productsNames:
@@ -112,7 +118,7 @@ class CreateShopBot(telepot.helper.ChatHandler):
                         self.currentPriceStr = data['product']['variants'][0]['price']
 
                 # text = ''
-                markup = ReplyKeyboardMarkup(keyboard=[[KeyboardButton(text='Pay')]], one_time_keyboard=True)
+                markup = ReplyKeyboardMarkup(keyboard=[[KeyboardButton(text=emoji_credit_card+' Pay')]], one_time_keyboard=True)
 
                 detailedString = 'Item: ' + self.currentNameStr \
                                  + '\nType: ' + self.currentTypeStr \
@@ -141,7 +147,7 @@ class CreateShopBot(telepot.helper.ChatHandler):
                 self.currentPriceStr = data['product']['variants'][0]['price']
 
                 # text = ''
-                markup = ReplyKeyboardMarkup(keyboard=[[KeyboardButton(text='Pay')]], one_time_keyboard=True)
+                markup = ReplyKeyboardMarkup(keyboard=[[KeyboardButton(text=emoji_credit_card+' Pay')]], one_time_keyboard=True)
 
                 detailedString = 'Item: ' + self.currentNameStr \
                                  + '\nType: ' + self.currentTypeStr \
@@ -151,18 +157,19 @@ class CreateShopBot(telepot.helper.ChatHandler):
 
 
             # Show Payment Confirmation Question
-            elif text == 'Pay':
+            elif text == emoji_credit_card+' Pay':
                 # text = ''
-                markup = ReplyKeyboardMarkup(keyboard=[[KeyboardButton(text='Confirm'),KeyboardButton(text='Cancel')]], one_time_keyboard=True)
+                markup = ReplyKeyboardMarkup(keyboard=[[KeyboardButton(text=emoji_white_check_mark+' Confirm'),KeyboardButton(text=emoji_x+' Cancel')]], one_time_keyboard=True)
 
                 confirmationString = 'Item: ' + self.currentNameStr + ' $' + self.currentPriceStr \
                                      + '\n\nConfirm purchase?'
                 bot.sendMessage(chat_id, confirmationString, reply_markup=markup)
 
             # Show Payment Confirmation Question
-            elif text == 'Confirm':
+            elif text == emoji_white_check_mark+' Confirm':
                 # text = ''
-                bot.sendMessage(chat_id, 'Thanks for buying at {}, your {} will be delivered at your address!'.format(self.shopName,self.currentNameStr ))
+                bot.sendMessage(chat_id, 'Thanks for buying at {} '.format(self.shopName) + emoji_convenience_store
+                                + ', your {} will be delivered at your address!'.format(self.currentNameStr))
 
             #if text != None and text != '':
                 #bot.sendMessage(chat_id=chat_id, text=text)
