@@ -24,11 +24,18 @@ class CreateShopBot(telepot.helper.ChatHandler):
                 
         # Get all categories to create menu
         self.product_types = Set()
-        self.products = shopify.Product.find()                
+        self.products = shopify.Product.find()
+        self.productsNames = []
         for product in self.products:
             string = product.to_json()
             data = json.loads(string)
+            self.productsNames.append(data['product']['title'])
             self.product_types.add(data['product']['product_type'])
+
+        self.currentNameStr = ''
+        self.currentTypeStr = ''
+        self.currentDetailStr = ''
+        self.currentPriceStr = ''
 
     def on_message(self, msg):
         content_type, chat_type, chat_id = telepot.glance(msg)
@@ -37,13 +44,17 @@ class CreateShopBot(telepot.helper.ChatHandler):
         if chat_type == 'private' and content_type == 'text':
             text = msg['text']
             # Start store
-            if text == '/create' or text == '/start':   #user may be restarting flow
+            if text == '/create' or text == '/start' or text == 'Cancel':   #user may be restarting flow
+                self.currentNameStr = ''
+                self.currentTypeStr = ''
+                self.currentDetailStr = ''
+                self.currentPriceStr = ''
                 markup = ReplyKeyboardMarkup(keyboard=[[KeyboardButton(text='List Categories')]], one_time_keyboard=True)
                 bot.sendMessage(chat_id, 'Welcome to {}! - What do you want to do?'.format(self.shopName), reply_markup=markup)                                
 
             # List Products Categories
             elif text == 'List Categories':
-                text=''
+                # text=''
                 keyboardbuttons = []
                 for types in self.product_types:
                     keyboardbuttons.append([KeyboardButton(text=types)])
@@ -58,12 +69,56 @@ class CreateShopBot(telepot.helper.ChatHandler):
                     data = json.loads(string)
                     if data['product']['product_type'] == text:
                         keyboardCurrentProductsBtns.append([KeyboardButton(text=data['product']['title'])])
-                text = ''
+                # text = ''
                 markup = ReplyKeyboardMarkup(keyboard=keyboardCurrentProductsBtns, one_time_keyboard=True)
                 bot.sendMessage(chat_id, 'Choose product: ', reply_markup=markup)
-                
-            if text != None and text != '':
-                bot.sendMessage(chat_id=chat_id, text=text)
+
+            # Show Product Details
+            elif text in self.productsNames:
+                # Name: title
+                #
+                # Type: product_type
+                #
+                # Details: body_html
+                #
+                # Price:$variants[0].price
+                #
+                # Buy  button
+                for product in self.products:
+                    string = product.to_json()
+                    data = json.loads(string)
+
+                    if data['product']['title'] == text:
+                        self.currentNameStr = text
+                        self.currentTypeStr = data['product']['product_type']
+                        self.currentDetailStr = data['product']['body_html']
+                        self.currentPriceStr = data['product']['variants'][0]['price']
+
+                # text = ''
+                markup = ReplyKeyboardMarkup(keyboard=[[KeyboardButton(text='Pay')]], one_time_keyboard=True)
+
+                detailedString = 'Item: ' + self.currentNameStr \
+                                 + '\nType: ' + self.currentTypeStr \
+                                 + '\nDetails: ' + self.currentDetailStr \
+                                 + '\nPrice: $' + self.currentPriceStr
+                bot.sendMessage(chat_id, detailedString, reply_markup=markup)
+
+            # Show Payment Confirmation Question
+            elif text == 'Pay':
+                # text = ''
+                markup = ReplyKeyboardMarkup(keyboard=[[KeyboardButton(text='Confirm')],[KeyboardButton(text='Cancel')]], one_time_keyboard=True)
+
+                confirmationString = 'Item: ' + self.currentNameStr + ' $' + self.currentPriceStr \
+                                     + '\n\nConfirm purchase?'
+                bot.sendMessage(chat_id, confirmationString, reply_markup=markup)
+
+            # Show Payment Confirmation Question
+            elif text == 'Confirm':
+                # text = ''
+                bot.sendMessage(chat_id, 'Thanks for buying at {}, your {} will be delivered at your address!'.format(self.shopName,self.currentNameStr ))
+
+            #if text != None and text != '':
+                #bot.sendMessage(chat_id=chat_id, text=text)
 
 
 
@@ -72,8 +127,6 @@ API_KEY = sys.argv[1]
 PASSWORD = sys.argv[2]
 SHOP_NAME = sys.argv[3]
 TOKEN = sys.argv[4]
-
-
 
 
 bot = telepot.DelegatorBot(TOKEN, [
