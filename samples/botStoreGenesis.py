@@ -8,6 +8,7 @@ import json
 import time
 from sets import Set
 import re
+import binascii
 from geopy.geocoders import Nominatim
 
 emoji_page_with_curl = u'\U0001F4C3'
@@ -16,7 +17,7 @@ emoji_credit_card = u'\U0001F4B3'
 emoji_white_check_mark = u'\u2705'
 emoji_x = u"\u274C"
 emoji_convenience_store = u"\U0001F3EA"
-emoji_world_map = u"\U0001F5FA"
+emoji_world_map = u"\U0001F310"
 
 #can_postcode = r'/^[A-Za-z]\d[A-Za-z][ -]?\d[A-Za-z]\d$/'
 #can_add = r'[ABCEGHJKLMNPRSTVXY]\d[A-Z] \d[A-Z]\d'
@@ -78,10 +79,10 @@ class CreateShopBot(telepot.helper.ChatHandler):
                     image = data['product']['image']
                     if image != None:
                         imageURL = data['product']['image']['src']
-                        bot.sendPhoto(chat_id, imageURL, caption=data['product']['title'] + '\n' + '/Code' + str(
-                            data['product']['id']) + '\n$' + data['product']['variants'][0]['price'], reply_markup=ReplyKeyboardHide())
+                        bot.sendPhoto(chat_id, imageURL, caption=data['product']['title'] + '\n' + '/Prod' + binascii.hexlify(str(
+                            data['product']['id'])) + '\n$' + data['product']['variants'][0]['price'], reply_markup=ReplyKeyboardHide())
                     else:
-                        bot.sendMessage(chat_id, data['product']['title'] + '\n' + '/Code' + str(data['product']['id'])
+                        bot.sendMessage(chat_id, data['product']['title'] + '\n' + '/Prod' + binascii.hexlify(str(data['product']['id']))
                                         + '\n$' + data['product']['variants'][0]['price'], reply_markup=ReplyKeyboardHide())
                 if count == self.maxProductPage:
                     self.currentProductIndex = idx + startIndex
@@ -174,7 +175,7 @@ class CreateShopBot(telepot.helper.ChatHandler):
                 bot.sendMessage(chat_id, detailedString, reply_markup=markup)
 
             # Show Product Details By Code
-            elif text[:5] == '/Code': #remember to put all / commands before this elif
+            elif text[:5] == '/Prod': #remember to put all / commands before this elif
                 # Name: title
                 #
                 # Type: product_type
@@ -187,7 +188,7 @@ class CreateShopBot(telepot.helper.ChatHandler):
 
                 bot.sendChatAction(chat_id=chat_id, action='typing')
 
-                productById = shopify.Product.find(text[5:])
+                productById = shopify.Product.find(binascii.unhexlify(text[5:]))
                 string = productById.to_json()
                 data = json.loads(string)
 
@@ -246,7 +247,7 @@ class CreateShopBot(telepot.helper.ChatHandler):
                 #bot.sendMessage(chat_id, locationString) # Wait For Location
 
             # Location sent
-            elif content_type == 'location':
+            elif content_type == 'location' and self.currentNameStr != "":
                 # clear keyboard
                 markup = ReplyKeyboardMarkup(keyboard=[[KeyboardButton(text=emoji_white_check_mark + ' Correct Address'), KeyboardButton(text=emoji_x + ' Wrong Address')]], one_time_keyboard=True)
                 geolocator = Nominatim()
@@ -256,12 +257,14 @@ class CreateShopBot(telepot.helper.ChatHandler):
                 bot.sendMessage(chat_id, "Is the following address correct?\n\n" + location.address, reply_markup=markup)
 
             # Show Payment Confirmation Question
-            elif text == emoji_white_check_mark + ' Correct Address' or emoji_world_map+ " My Default Address" in text: #or re.search(can_add, text) or re.search(us_add, text):
+            elif self.currentNameStr != "" and (text == emoji_white_check_mark + ' Correct Address' or emoji_world_map+ " My Default Address" in text): #or re.search(can_add, text) or re.search(us_add, text):
                 # text = ''
                 markup = ReplyKeyboardMarkup(keyboard=[[KeyboardButton(text=emoji_white_check_mark+' Confirm'),KeyboardButton(text=emoji_x+' Cancel')]], one_time_keyboard=True)
 
                 confirmationString = 'Item: ' + self.currentNameStr + ' $' + self.currentPriceStr \
                                      + '\n\nConfirm purchase?'
+
+                self.currentNameStr = "";
                 bot.sendMessage(chat_id, confirmationString, reply_markup=markup)
 
             # Show Payment Confirmation Question
