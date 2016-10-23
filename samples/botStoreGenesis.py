@@ -79,10 +79,10 @@ class CreateShopBot(telepot.helper.ChatHandler):
                     if image != None:
                         imageURL = data['product']['image']['src']
                         bot.sendPhoto(chat_id, imageURL, caption=data['product']['title'] + '\n' + '/Code' + str(
-                            data['product']['id']) + '\n$' + data['product']['variants'][0]['price'])
+                            data['product']['id']) + '\n$' + data['product']['variants'][0]['price'], reply_markup=ReplyKeyboardHide())
                     else:
                         bot.sendMessage(chat_id, data['product']['title'] + '\n' + '/Code' + str(data['product']['id'])
-                                        + '\n$' + data['product']['variants'][0]['price'])
+                                        + '\n$' + data['product']['variants'][0]['price'], reply_markup=ReplyKeyboardHide())
                 if count == self.maxProductPage:
                     self.currentProductIndex = idx + startIndex
         if count == self.maxProductPage and maxidx > self.currentProductIndex:
@@ -110,7 +110,7 @@ class CreateShopBot(telepot.helper.ChatHandler):
             elif text == '/help' or text == '/about':
                 bot.sendMessage(chat_id, 'This bot was created by @brucostam @xitz0r and @PabloMontenegro in the'
                                 + ' VanHackAthon event in October 21-23, 2016. It is used as a generic store bot that'
-                                + ' allows @ShopifyFatherBot to create any shopify store as a chatbot store')
+                                + ' allows @ShopifyFatherBot to create any shopify store as a chatbot store', reply_markup=ReplyKeyboardHide())
 
             # List Products Categories
             elif text == emoji_memo+' List Categories':
@@ -135,7 +135,7 @@ class CreateShopBot(telepot.helper.ChatHandler):
 
             # Show Category Product As Texts
             elif text != "" and (text in self.product_types or text == 'More Products'):
-                bot.sendMessage(chat_id, 'Click on product code to select: ')
+                bot.sendMessage(chat_id, 'Click on product code to select: ', reply_markup=ReplyKeyboardHide())
                 if text != 'More Products':
                     self.previousType = text
                     self.currentProductIndex = 0
@@ -268,7 +268,7 @@ class CreateShopBot(telepot.helper.ChatHandler):
             elif text == emoji_white_check_mark+' Confirm':
                 # text = ''
                 bot.sendMessage(chat_id, 'Thanks for buying at {} '.format(self.shopName) + emoji_convenience_store
-                                + ', your {} will be delivered at your address!'.format(self.currentNameStr))
+                                + ', your {} will be delivered at your address!'.format(self.currentNameStr), reply_markup=ReplyKeyboardHide())
 
             #if text != None and text != '':
                 #bot.sendMessage(chat_id=chat_id, text=text)
