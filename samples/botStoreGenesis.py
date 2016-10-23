@@ -45,13 +45,48 @@ class CreateShopBot(telepot.helper.ChatHandler):
         self.currentDetailStr = ''
         self.currentPriceStr = ''
 
+        self.currentProductIndex = 0
+        self.maxProductPage = 5
+        self.previousType = ''
+
     @staticmethod
     def remove_tags(text):
         return re.compile(r'<[^>]+>').sub('', text)
 
+    def print_products(self, chat_id, type, startIndex):
+        count = 0
+        maxidx = 0
+        # print('startIndex:{}'.format(startIndex))
+        for idx, product in enumerate(self.products[startIndex:]):
+            # print(idx, product)
+            maxidx = idx
+            # for product in self.products:
+            if count < self.maxProductPage:
+                string = product.to_json()
+                data = json.loads(string)
+                # print('type:{}'.format(type))
+                if data['product']['product_type'] == type:
+                    count += 1
+                    # print(count)
+                    image = data['product']['image']
+                    if image != None:
+                        imageURL = data['product']['image']['src']
+                        bot.sendPhoto(chat_id, imageURL, caption=data['product']['title'] + '\n' + '/Code' + str(
+                            data['product']['id']) + '\n$' + data['product']['variants'][0]['price'])
+                    else:
+                        bot.sendMessage(chat_id, data['product']['title'] + '\n' + '/Code' + str(data['product']['id'])
+                                        + '\n$' + data['product']['variants'][0]['price'])
+                if count == self.maxProductPage:
+                    self.currentProductIndex = idx + startIndex
+        if count == self.maxProductPage and maxidx > self.currentProductIndex:
+            markup = ReplyKeyboardMarkup(keyboard=[[KeyboardButton(text='More Products')]],
+                                         one_time_keyboard=True)
+            bot.sendMessage(chat_id, 'Click \"More Products\" to view more ', reply_markup=markup)
+
     def on_message(self, msg):
         content_type, chat_type, chat_id = telepot.glance(msg)
         print(content_type, chat_type, chat_id)
+        print(msg)
 
         if chat_type == 'private' and content_type == 'text':
             text = msg['text']
@@ -86,21 +121,14 @@ class CreateShopBot(telepot.helper.ChatHandler):
             #     bot.sendMessage(chat_id, 'Choose product: ', reply_markup=markup)
 
             # Show Category Product As Texts
-            elif text in self.product_types:
+            elif text in self.product_types or text == 'More Products':
                 bot.sendMessage(chat_id, 'Click on product code to select: ')
-
-                for product in self.products:
-                    string = product.to_json()
-                    data = json.loads(string)
-                    if data['product']['product_type'] == text:
-                        image = data['product']['image']
-                        print image
-                        if image != None:
-                            imageURL = data['product']['image']['src']
-                            bot.sendPhoto(chat_id, imageURL, caption=data['product']['title'] + '\n' + '/Code' + str(data['product']['id']) + '\n$' + data['product']['variants'][0]['price'])
-                        else:
-                            bot.sendMessage(chat_id, data['product']['title'] + '\n' + '/Code'+str(data['product']['id'])
-                                            + '\n$' + data['product']['variants'][0]['price'])
+                if text != 'More Products':
+                    self.previousType = text
+                    self.currentProductIndex = 0
+                else:
+                    self.currentProductIndex += 1
+                self.print_products(chat_id, self.previousType, self.currentProductIndex)
 
             # Show Product Details
             elif text in self.productsNames:

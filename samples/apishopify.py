@@ -7,9 +7,9 @@ from sets import Set
 print('rodou algo')
 
 
-SHOP_NAME = "vanhackathonstore-2"
-API_KEY = "f0238210a5210edbd943d49526cba54e"
-PASSWORD = "f50bd1e9c9e87befc956ac0677acd359"
+SHOP_NAME = 
+API_KEY = 
+PASSWORD = 
 
 shop_url = "https://%s:%s@%s.myshopify.com/admin" % (API_KEY, PASSWORD,SHOP_NAME)
 shopify.ShopifyResource.set_site(shop_url)
