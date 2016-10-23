@@ -254,7 +254,7 @@ class CreateShopBot(telepot.helper.ChatHandler):
                 bot.sendMessage(chat_id, addressString, reply_markup=self.currentMarkup)
 
             # Wait For Location
-            elif text == emoji_world_map+ ' Choose a location':
+            elif text == emoji_world_map+ ' Choose a Location':
                 self.currentState = self.SELECT_ADDRESS
                 # clear keyboard
 
@@ -265,7 +265,7 @@ class CreateShopBot(telepot.helper.ChatHandler):
             elif content_type == 'location' and self.currentNameStr != "":
                 self.currentState = self.CONFIRM_ADDRESS
                 # clear keyboard
-                self.currentMarkup = ReplyKeyboardMarkup(keyboard=[[KeyboardButton(text=emoji_white_check_mark + ' Correct address'), KeyboardButton(text=emoji_x + ' Wrong address')]], one_time_keyboard=True)
+                self.currentMarkup = ReplyKeyboardMarkup(keyboard=[[KeyboardButton(text=emoji_white_check_mark + ' Correct Address'), KeyboardButton(text=emoji_x + ' Wrong Address')]], one_time_keyboard=True)
                 geolocator = Nominatim()
                 latiLong = str(msg['location']['latitude']) +", " + str(msg['location']['longitude'])
                 location = geolocator.reverse(latiLong)
@@ -273,7 +273,7 @@ class CreateShopBot(telepot.helper.ChatHandler):
                 bot.sendMessage(chat_id, "Is the following address correct?\n\n" + location.address, reply_markup=self.currentMarkup)
 
             # Show Payment Confirmation Question
-            elif self.currentNameStr != "" and (text == emoji_white_check_mark + ' Correct address' or emoji_world_map+ " My default address" in text): #or re.search(can_add, text) or re.search(us_add, text):
+            elif self.currentNameStr != "" and (text == emoji_white_check_mark + ' Correct Address' or emoji_world_map+ " My Default Address" in text): #or re.search(can_add, text) or re.search(us_add, text):
                 self.currentState = self.CONFIRM_PURCHASE
                 self.currentMarkup = ReplyKeyboardMarkup(keyboard=[[KeyboardButton(text=emoji_white_check_mark+' Confirm'),KeyboardButton(text=emoji_x+' Cancel')]], one_time_keyboard=True)
 
