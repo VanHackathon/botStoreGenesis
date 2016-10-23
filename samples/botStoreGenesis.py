@@ -79,10 +79,10 @@ class CreateShopBot(telepot.helper.ChatHandler):
                     image = data['product']['image']
                     if image != None:
                         imageURL = data['product']['image']['src']
-                        bot.sendPhoto(chat_id, imageURL, caption=data['product']['title'] + '\n' + '/Code' + binascii.hexlify(str(
+                        bot.sendPhoto(chat_id, imageURL, caption=data['product']['title'] + '\n' + '/Prod' + binascii.hexlify(str(
                             data['product']['id'])) + '\n$' + data['product']['variants'][0]['price'], reply_markup=ReplyKeyboardHide())
                     else:
-                        bot.sendMessage(chat_id, data['product']['title'] + '\n' + '/Code' + binascii.hexlify(str(data['product']['id']))
+                        bot.sendMessage(chat_id, data['product']['title'] + '\n' + '/Prod' + binascii.hexlify(str(data['product']['id']))
                                         + '\n$' + data['product']['variants'][0]['price'], reply_markup=ReplyKeyboardHide())
                 if count == self.maxProductPage:
                     self.currentProductIndex = idx + startIndex
