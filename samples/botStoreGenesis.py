@@ -202,7 +202,7 @@ class CreateShopBot(telepot.helper.ChatHandler):
 
 
             # Show Shipping Addresses
-            elif text == emoji_credit_card+' Pay' or text == emoji_world_map+ ' Wrong Address':
+            elif text == emoji_credit_card+' Pay' or text == emoji_x+ ' Wrong Address':
                 markup = ReplyKeyboardMarkup(keyboard=[[KeyboardButton(text=emoji_world_map + ' My Default Address'), KeyboardButton(text=emoji_world_map + ' Choose a Location'), KeyboardButton(text=emoji_world_map + ' Send Your Current Location', request_location=True)]], one_time_keyboard=True)
 
                 addressString = "Where Should we Ship to?"
@@ -243,7 +243,7 @@ class CreateShopBot(telepot.helper.ChatHandler):
             # Location sent
             elif content_type == 'location':
                 # clear keyboard
-                markup = ReplyKeyboardMarkup(keyboard=[[KeyboardButton(text=emoji_world_map + ' Correct Address'), KeyboardButton(text=emoji_world_map + ' Wrong Address')]], one_time_keyboard=True)
+                markup = ReplyKeyboardMarkup(keyboard=[[KeyboardButton(text=emoji_white_check_mark + ' Correct Address'), KeyboardButton(text=emoji_x + ' Wrong Address')]], one_time_keyboard=True)
                 geolocator = Nominatim()
                 latiLong = str(msg['location']['latitude']) +", " + str(msg['location']['longitude'])
                 location = geolocator.reverse(latiLong)
@@ -251,7 +251,7 @@ class CreateShopBot(telepot.helper.ChatHandler):
                 bot.sendMessage(chat_id, "Is the following address correct?\n\n" + location.address, reply_markup=markup)
 
             # Show Payment Confirmation Question
-            elif text == emoji_world_map + ' Correct Address' or emoji_world_map+ " My Default Address" in text: #or re.search(can_add, text) or re.search(us_add, text):
+            elif text == emoji_white_check_mark + ' Correct Address' or emoji_world_map+ " My Default Address" in text: #or re.search(can_add, text) or re.search(us_add, text):
                 # text = ''
                 markup = ReplyKeyboardMarkup(keyboard=[[KeyboardButton(text=emoji_white_check_mark+' Confirm'),KeyboardButton(text=emoji_x+' Cancel')]], one_time_keyboard=True)
 
