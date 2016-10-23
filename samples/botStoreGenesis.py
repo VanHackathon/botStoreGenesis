@@ -7,6 +7,7 @@ import os
 import json
 import time
 from sets import Set
+import re
 
 emoji_page_with_curl = u'\U0001F4C3'
 emoji_memo = u'\U0001F4DD'
@@ -43,6 +44,10 @@ class CreateShopBot(telepot.helper.ChatHandler):
         self.currentTypeStr = ''
         self.currentDetailStr = ''
         self.currentPriceStr = ''
+
+    @staticmethod
+    def remove_tags(text):
+        return re.compile(r'<[^>]+>').sub('', text)
 
     def on_message(self, msg):
         content_type, chat_type, chat_id = telepot.glance(msg)
@@ -123,7 +128,7 @@ class CreateShopBot(telepot.helper.ChatHandler):
 
                 detailedString = 'Item: ' + self.currentNameStr \
                                  + '\nType: ' + self.currentTypeStr \
-                                 + '\nDetails: ' + self.currentDetailStr \
+                                 + '\nDetails: ' + CreateShopBot.remove_tags(self.currentDetailStr) \
                                  + '\nPrice: $' + self.currentPriceStr
                 bot.sendMessage(chat_id, detailedString, reply_markup=markup)
 
@@ -155,7 +160,7 @@ class CreateShopBot(telepot.helper.ChatHandler):
 
                 detailedString = 'Item: ' + self.currentNameStr \
                                  + '\nType: ' + self.currentTypeStr \
-                                 + '\nDetails: ' + self.currentDetailStr \
+                                 + '\nDetails: ' + CreateShopBot.remove_tags(self.currentDetailStr) \
                                  + '\nPrice: $' + self.currentPriceStr
                 bot.sendMessage(chat_id, detailedString, reply_markup=markup)
 
@@ -197,4 +202,3 @@ bot.message_loop()
 print 'Listening...'
 while True:
     time.sleep(10)
-    
