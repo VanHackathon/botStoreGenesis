@@ -57,6 +57,39 @@ class CreateShopBot(telepot.helper.ChatHandler):
         self.maxProductPage = 5
         self.previousType = ''
 
+        # self.states = Set()
+        # self.states.add = 'justStarted' # list categories button should be pressed?
+        # self.states.add = 'categoriesListed' # select product type?
+        # self.states.add = 'productsListed' # select product
+        # self.states.add = 'readyToPay' # press pay?
+        # self.states.add = 'selectAddress' # select address
+        # self.states.add = 'confirmAddress' # confirm address
+        # self.states.add = 'confirmPurchase' # confirm purchase
+        self.NO_STATE = ''
+        self.JUST_STARTED = 'justStarted'
+        self.CATEGORIES_LISTED = 'categoriesListed'
+        self.PRODUCTS_LISTED = 'productsListed'
+        self.READY_TO_PAY = 'readyToPay'
+        self.SELECT_ADDRESS = 'selectAddress'
+        self.CONFIRM_ADDRESS = 'confirmAddress'
+        self.CONFIRM_PURCHASE = 'confirmPurchase'
+
+
+        self.states = {self.NO_STATE : 'Sorry, I couldn\'t understand you :(',
+                       self.JUST_STARTED : 'Sorry, I couldn\'t understand. Maybe you want to press'
+                                       + ' List Categories button to get started?',
+                       self.CATEGORIES_LISTED : 'Sorry, how about choosing the product type in the list?',
+                       self.PRODUCTS_LISTED : 'Let me see, you may want to select a product now? If so, just click on'
+                                          + ' their code!',
+                       self.READY_TO_PAY : 'Hey, how about getting this awesome product? (You need to hit PAY)',
+                       self.SELECT_ADDRESS : 'We need to know the shipping address now...',
+                       self.CONFIRM_ADDRESS : 'I\'m excited! Almost there! What are you waiting to confirm your address?',
+                       self.CONFIRM_PURCHASE : 'Still with any doubts? One step to go...'}
+
+        self.currentState = ''
+        self.currentMarkup = ReplyKeyboardHide()
+
+
     @staticmethod
     def remove_tags(text):
         return re.compile(r'<[^>]+>').sub('', text)
@@ -77,19 +110,20 @@ class CreateShopBot(telepot.helper.ChatHandler):
                     count += 1
                     # print(count)
                     image = data['product']['image']
+                    self.currentMarkup = ReplyKeyboardHide()
                     if image != None:
                         imageURL = data['product']['image']['src']
                         bot.sendPhoto(chat_id, imageURL, caption=data['product']['title'] + '\n' + '/Prod' + binascii.hexlify(str(
-                            data['product']['id'])) + '\n$' + data['product']['variants'][0]['price'], reply_markup=ReplyKeyboardHide())
+                            data['product']['id'])) + '\n$' + data['product']['variants'][0]['price'], reply_markup=self.currentMarkup)
                     else:
                         bot.sendMessage(chat_id, data['product']['title'] + '\n' + '/Prod' + binascii.hexlify(str(data['product']['id']))
-                                        + '\n$' + data['product']['variants'][0]['price'], reply_markup=ReplyKeyboardHide())
+                                        + '\n$' + data['product']['variants'][0]['price'], reply_markup=self.currentMarkup)
                 if count == self.maxProductPage:
                     self.currentProductIndex = idx + startIndex
         if count == self.maxProductPage and maxidx > self.currentProductIndex:
-            markup = ReplyKeyboardMarkup(keyboard=[[KeyboardButton(text='More Products')]],
+            self.currentMarkup = ReplyKeyboardMarkup(keyboard=[[KeyboardButton(text='More Products')]],
                                          one_time_keyboard=True)
-            bot.sendMessage(chat_id, 'Click \"More Products\" to view more ', reply_markup=markup)
+            bot.sendMessage(chat_id, 'Click \"More Products\" to view more ', reply_markup=self.currentMarkup)
 
     def on_message(self, msg):
         content_type, chat_type, chat_id = telepot.glance(msg)
@@ -101,26 +135,28 @@ class CreateShopBot(telepot.helper.ChatHandler):
             if content_type == 'text': text = msg['text']
             # Start store
             if text == '/create' or text == '/start' or text == emoji_x+' Cancel':   #user may be restarting flow
+                self.currentState = self.JUST_STARTED
                 self.currentNameStr = ''
                 self.currentTypeStr = ''
                 self.currentDetailStr = ''
                 self.currentPriceStr = ''
-                markup = ReplyKeyboardMarkup(keyboard=[[KeyboardButton(text=emoji_memo+' List Categories')]], one_time_keyboard=True)
-                bot.sendMessage(chat_id, 'Welcome to {} '.format(self.shopName) + emoji_convenience_store + ' - What do you want to do?', reply_markup=markup)
+                self.currentMarkup = ReplyKeyboardMarkup(keyboard=[[KeyboardButton(text=emoji_memo+' List Categories')]], one_time_keyboard=True)
+                bot.sendMessage(chat_id, 'Welcome to {} '.format(self.shopName) + emoji_convenience_store + ' - What do you want to do?', reply_markup=self.currentMarkup)
 
             elif text == '/help' or text == '/about':
+                self.currentMarkup = ReplyKeyboardHide()
                 bot.sendMessage(chat_id, 'This bot was created by @brucostam @xitz0r and @PabloMontenegro in the'
                                 + ' VanHackAthon event in October 21-23, 2016. It is used as a generic store bot that'
-                                + ' allows @ShopifyFatherBot to create any shopify store as a chatbot store', reply_markup=ReplyKeyboardHide())
+                                + ' allows @ShopifyFatherBot to create any shopify store as a chatbot store', reply_markup=self.currentMarkup)
 
             # List Products Categories
             elif text == emoji_memo+' List Categories':
-                # text=''
+                self.currentState = self.CATEGORIES_LISTED
                 keyboardbuttons = []
                 for types in self.product_types:
                     keyboardbuttons.append([KeyboardButton(text=types)])
-                markup = ReplyKeyboardMarkup(keyboard=keyboardbuttons, one_time_keyboard=True)
-                bot.sendMessage(chat_id, 'Choose the product type:', reply_markup=markup)
+                self.currentMarkup = ReplyKeyboardMarkup(keyboard=keyboardbuttons, one_time_keyboard=True)
+                bot.sendMessage(chat_id, 'Choose the product type:', reply_markup=self.currentMarkup)
                 
             # Show Category Product
             # elif text in self.product_types:
@@ -136,7 +172,9 @@ class CreateShopBot(telepot.helper.ChatHandler):
 
             # Show Category Product As Texts
             elif text != "" and (text in self.product_types or text == 'More Products'):
-                bot.sendMessage(chat_id, 'Click on product code to select: ', reply_markup=ReplyKeyboardHide())
+                self.currentState = self.PRODUCTS_LISTED
+                self.currentMarkup = ReplyKeyboardHide()
+                bot.sendMessage(chat_id, 'Click on product code to select: ', reply_markup=self.currentMarkup)
                 if text != 'More Products':
                     self.previousType = text
                     self.currentProductIndex = 0
@@ -146,6 +184,7 @@ class CreateShopBot(telepot.helper.ChatHandler):
 
             # Show Product Details
             elif text in self.productsNames:
+                self.currentState = self.READY_TO_PAY
                 # Name: title
                 #
                 # Type: product_type
@@ -165,17 +204,17 @@ class CreateShopBot(telepot.helper.ChatHandler):
                         self.currentDetailStr = data['product']['body_html']
                         self.currentPriceStr = data['product']['variants'][0]['price']
 
-                # text = ''
-                markup = ReplyKeyboardMarkup(keyboard=[[KeyboardButton(text=emoji_credit_card+' Pay')]], one_time_keyboard=True)
+                self.currentMarkup = ReplyKeyboardMarkup(keyboard=[[KeyboardButton(text=emoji_credit_card+' Pay')]], one_time_keyboard=True)
 
                 detailedString = 'Item: ' + self.currentNameStr \
                                  + '\nType: ' + self.currentTypeStr \
                                  + '\nDetails: ' + CreateShopBot.remove_tags(self.currentDetailStr) \
                                  + '\nPrice: $' + self.currentPriceStr
-                bot.sendMessage(chat_id, detailedString, reply_markup=markup)
+                bot.sendMessage(chat_id, detailedString, reply_markup=self.currentMarkup)
 
             # Show Product Details By Code
             elif text[:5] == '/Prod': #remember to put all / commands before this elif
+                self.currentState = self.READY_TO_PAY
                 # Name: title
                 #
                 # Type: product_type
@@ -197,84 +236,62 @@ class CreateShopBot(telepot.helper.ChatHandler):
                 self.currentDetailStr = data['product']['body_html']
                 self.currentPriceStr = data['product']['variants'][0]['price']
 
-                # text = ''
-                markup = ReplyKeyboardMarkup(keyboard=[[KeyboardButton(text=emoji_credit_card+' Pay')]], one_time_keyboard=True)
+                self.currentMarkup = ReplyKeyboardMarkup(keyboard=[[KeyboardButton(text=emoji_credit_card+' Pay')]], one_time_keyboard=True)
 
                 detailedString = 'Item: ' + self.currentNameStr \
                                  + '\nType: ' + self.currentTypeStr \
                                  + '\nDetails: ' + CreateShopBot.remove_tags(self.currentDetailStr) \
                                  + '\nPrice: $' + self.currentPriceStr
-                bot.sendMessage(chat_id, detailedString, reply_markup=markup)
+                bot.sendMessage(chat_id, detailedString, reply_markup=self.currentMarkup)
 
 
             # Show Shipping Addresses
             elif text == emoji_credit_card+' Pay' or text == emoji_x+ ' Wrong Address':
-                markup = ReplyKeyboardMarkup(keyboard=[[KeyboardButton(text=emoji_world_map + ' My Default Address'), KeyboardButton(text=emoji_world_map + ' Choose a Location'), KeyboardButton(text=emoji_world_map + ' Send Your Current Location', request_location=True)]], one_time_keyboard=True)
+                self.currentState = self.SELECT_ADDRESS
+                self.currentMarkup = ReplyKeyboardMarkup(keyboard=[[KeyboardButton(text=emoji_world_map + ' My Default Address'), KeyboardButton(text=emoji_world_map + ' Choose a Location'), KeyboardButton(text=emoji_world_map + ' Send Your Current Location', request_location=True)]], one_time_keyboard=True)
 
                 addressString = "Where Should we Ship to?"
-                bot.sendMessage(chat_id, addressString, reply_markup=markup)
+                bot.sendMessage(chat_id, addressString, reply_markup=self.currentMarkup)
 
             # Wait For Location
             elif text == emoji_world_map+ ' Choose a Location':
+                self.currentState = self.SELECT_ADDRESS
                 # clear keyboard
 
                 addressString = 'Ok, send me the location'
                 bot.sendMessage(chat_id, addressString) # Wait For Location
 
-            # My Addresses
-            #elif text == emoji_temp + ' My Addresses':
-
-             #   markup = ReplyKeyboardMarkup(keyboard=[[KeyboardButton(text=emoji_temp + ' Address #1'),  KeyboardButton(text=emoji_temp + ' Address #2'), KeyboardButton(text=emoji_temp + ' Address #3')]], one_time_keyboard=True)
-
-              #  addressString = "Where Should we Ship to?"
-               # bot.sendMessage(chat_id, addressString, reply_markup=markup)
-
-            # Write Address
-            #elif text == emoji_temp + ' Write Address':
-            # clear keyboard
-
-            #   addressString = 'Ok, write me your address.'
-            #    bot.sendMessage(chat_id, addressString) # Wait For Location
-
-            # Write Zipcode
-            #elif re.search(can_postcode, text)
-                #    # clear keyboard
-
-                #geolocator = Nominatim()
-                #location = geolocator.geocode(text)
-
-                #locationString = 'Cool'
-                #bot.sendMessage(chat_id, locationString) # Wait For Location
-
             # Location sent
             elif content_type == 'location' and self.currentNameStr != "":
+                self.currentState = self.CONFIRM_ADDRESS
                 # clear keyboard
-                markup = ReplyKeyboardMarkup(keyboard=[[KeyboardButton(text=emoji_white_check_mark + ' Correct Address'), KeyboardButton(text=emoji_x + ' Wrong Address')]], one_time_keyboard=True)
+                self.currentMarkup = ReplyKeyboardMarkup(keyboard=[[KeyboardButton(text=emoji_white_check_mark + ' Correct Address'), KeyboardButton(text=emoji_x + ' Wrong Address')]], one_time_keyboard=True)
                 geolocator = Nominatim()
                 latiLong = str(msg['location']['latitude']) +", " + str(msg['location']['longitude'])
                 location = geolocator.reverse(latiLong)
 
-                bot.sendMessage(chat_id, "Is the following address correct?\n\n" + location.address, reply_markup=markup)
+                bot.sendMessage(chat_id, "Is the following address correct?\n\n" + location.address, reply_markup=self.currentMarkup)
 
             # Show Payment Confirmation Question
             elif self.currentNameStr != "" and (text == emoji_white_check_mark + ' Correct Address' or emoji_world_map+ " My Default Address" in text): #or re.search(can_add, text) or re.search(us_add, text):
-                # text = ''
-                markup = ReplyKeyboardMarkup(keyboard=[[KeyboardButton(text=emoji_white_check_mark+' Confirm'),KeyboardButton(text=emoji_x+' Cancel')]], one_time_keyboard=True)
+                self.currentState = self.CONFIRM_PURCHASE
+                self.currentMarkup = ReplyKeyboardMarkup(keyboard=[[KeyboardButton(text=emoji_white_check_mark+' Confirm'),KeyboardButton(text=emoji_x+' Cancel')]], one_time_keyboard=True)
 
                 confirmationString = 'Item: ' + self.currentNameStr + ' $' + self.currentPriceStr \
                                      + '\n\nConfirm purchase?'
 
                 self.currentNameStr = "";
-                bot.sendMessage(chat_id, confirmationString, reply_markup=markup)
+                bot.sendMessage(chat_id, confirmationString, reply_markup=self.currentMarkup)
 
             # Show Payment Confirmation Question
             elif text == emoji_white_check_mark+' Confirm':
-                # text = ''
+                self.currentState = self.NO_STATE
+                self.currentMarkup = ReplyKeyboardHide()
                 bot.sendMessage(chat_id, 'Thanks for buying at {} '.format(self.shopName) + emoji_convenience_store
-                                + ', your {} will be delivered at your address!'.format(self.currentNameStr), reply_markup=ReplyKeyboardHide())
+                                + ', your {} will be delivered at your address!'.format(self.currentNameStr), reply_markup=self.currentMarkup)
 
-            #if text != None and text != '':
-                #bot.sendMessage(chat_id=chat_id, text=text)
+            elif text != None and text != '':
+                bot.sendMessage(chat_id, self.states[self.currentState], reply_markup=self.currentMarkup)
 
 
 
