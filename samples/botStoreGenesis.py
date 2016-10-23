@@ -107,6 +107,11 @@ class CreateShopBot(telepot.helper.ChatHandler):
                 markup = ReplyKeyboardMarkup(keyboard=[[KeyboardButton(text=emoji_memo+' List Categories')]], one_time_keyboard=True)
                 bot.sendMessage(chat_id, 'Welcome to {} '.format(self.shopName) + emoji_convenience_store + ' - What do you want to do?', reply_markup=markup)
 
+            elif text == '/help' or text == '/about':
+                bot.sendMessage(chat_id, 'This bot was created by @brucostam @xitz0r and @PabloMontenegro in the'
+                                + ' VanHackAthon event in October 21-23, 2016. It is used as a generic store bot that'
+                                + ' allows @ShopifyFatherBot to create any shopify store as a chatbot store')
+
             # List Products Categories
             elif text == emoji_memo+' List Categories':
                 # text=''
