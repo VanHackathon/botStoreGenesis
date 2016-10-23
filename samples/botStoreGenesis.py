@@ -8,6 +8,7 @@ import json
 import time
 from sets import Set
 import re
+from geopy.geocoders import Nominatim
 
 emoji_page_with_curl = u'\U0001F4C3'
 emoji_memo = u'\U0001F4DD'
@@ -15,6 +16,12 @@ emoji_credit_card = u'\U0001F4B3'
 emoji_white_check_mark = u'\u2705'
 emoji_x = u"\u274C"
 emoji_convenience_store = u"\U0001F3EA"
+emoji_world_map = u"\U0001F5FA"
+
+#can_postcode = r'/^[A-Za-z]\d[A-Za-z][ -]?\d[A-Za-z]\d$/'
+#can_add = r'[ABCEGHJKLMNPRSTVXY]\d[A-Z] \d[A-Z]\d'
+#us_postcode = r'^\d{5}(?:[-\s]\d{4})?$'
+#us_add = r'\b\d{1,3}(?:\s[a-zA-Z\u00C0-\u017F]+)+'
 
 
 class CreateShopBot(telepot.helper.ChatHandler):
@@ -88,8 +95,9 @@ class CreateShopBot(telepot.helper.ChatHandler):
         print(content_type, chat_type, chat_id)
         print(msg)
 
-        if chat_type == 'private' and content_type == 'text':
-            text = msg['text']
+        if chat_type == 'private' and (content_type == 'text' or content_type == 'location'):
+            text = ""
+            if content_type == 'text': text = msg['text']
             # Start store
             if text == '/create' or text == '/start' or text == emoji_x+' Cancel':   #user may be restarting flow
                 self.currentNameStr = ''
@@ -121,7 +129,7 @@ class CreateShopBot(telepot.helper.ChatHandler):
             #     bot.sendMessage(chat_id, 'Choose product: ', reply_markup=markup)
 
             # Show Category Product As Texts
-            elif text in self.product_types or text == 'More Products':
+            elif text != "" and (text in self.product_types or text == 'More Products'):
                 bot.sendMessage(chat_id, 'Click on product code to select: ')
                 if text != 'More Products':
                     self.previousType = text
@@ -193,8 +201,57 @@ class CreateShopBot(telepot.helper.ChatHandler):
                 bot.sendMessage(chat_id, detailedString, reply_markup=markup)
 
 
+            # Show Shipping Addresses
+            elif text == emoji_credit_card+' Pay' or text == emoji_world_map+ ' Wrong Address':
+                markup = ReplyKeyboardMarkup(keyboard=[[KeyboardButton(text=emoji_world_map + ' My Default Address'), KeyboardButton(text=emoji_world_map + ' Choose a Location'), KeyboardButton(text=emoji_world_map + ' Send Your Current Location', request_location=True)]], one_time_keyboard=True)
+
+                addressString = "Where Should we Ship to?"
+                bot.sendMessage(chat_id, addressString, reply_markup=markup)
+
+            # Wait For Location
+            elif text == emoji_world_map+ ' Choose a Location':
+                # clear keyboard
+
+                addressString = 'Ok, send me the location'
+                bot.sendMessage(chat_id, addressString) # Wait For Location
+
+            # My Addresses
+            #elif text == emoji_temp + ' My Addresses':
+
+             #   markup = ReplyKeyboardMarkup(keyboard=[[KeyboardButton(text=emoji_temp + ' Address #1'),  KeyboardButton(text=emoji_temp + ' Address #2'), KeyboardButton(text=emoji_temp + ' Address #3')]], one_time_keyboard=True)
+
+              #  addressString = "Where Should we Ship to?"
+               # bot.sendMessage(chat_id, addressString, reply_markup=markup)
+
+            # Write Address
+            #elif text == emoji_temp + ' Write Address':
+            # clear keyboard
+
+            #   addressString = 'Ok, write me your address.'
+            #    bot.sendMessage(chat_id, addressString) # Wait For Location
+
+            # Write Zipcode
+            #elif re.search(can_postcode, text)
+                #    # clear keyboard
+
+                #geolocator = Nominatim()
+                #location = geolocator.geocode(text)
+
+                #locationString = 'Cool'
+                #bot.sendMessage(chat_id, locationString) # Wait For Location
+
+            # Location sent
+            elif content_type == 'location':
+                # clear keyboard
+                markup = ReplyKeyboardMarkup(keyboard=[[KeyboardButton(text=emoji_world_map + ' Correct Address'), KeyboardButton(text=emoji_world_map + ' Wrong Address')]], one_time_keyboard=True)
+                geolocator = Nominatim()
+                latiLong = str(msg['location']['latitude']) +", " + str(msg['location']['longitude'])
+                location = geolocator.reverse(latiLong)
+
+                bot.sendMessage(chat_id, "Is the following address correct?\n\n" + location.address, reply_markup=markup)
+
             # Show Payment Confirmation Question
-            elif text == emoji_credit_card+' Pay':
+            elif text == emoji_world_map + ' Correct Address' or emoji_world_map+ " My Default Address" in text: #or re.search(can_add, text) or re.search(us_add, text):
                 # text = ''
                 markup = ReplyKeyboardMarkup(keyboard=[[KeyboardButton(text=emoji_white_check_mark+' Confirm'),KeyboardButton(text=emoji_x+' Cancel')]], one_time_keyboard=True)
 
